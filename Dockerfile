@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 
 # Install Python dependencies
+# This will install WhiteNoise and django-storages via requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
 # Copy the rest of the project
@@ -27,9 +28,10 @@ COPY . .
 # Make sure static and media directories exist
 RUN mkdir -p staticfiles media
 
-# Collect static files (because DEBUG=False)
+# Collect static files
 RUN python manage.py collectstatic --noinput
 
 # Run migrations and start server
+# WhiteNoise will now handle serving files from the 'staticfiles' directory.
 CMD python manage.py migrate --noinput && \
     gunicorn projecto_condominio.wsgi:application --bind 0.0.0.0:${PORT:-8000}
