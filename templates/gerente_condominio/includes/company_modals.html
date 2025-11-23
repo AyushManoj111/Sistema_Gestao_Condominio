@@ -1,0 +1,74 @@
+<!-- MODAL ADICIONAR/EDITAR EMPRESA -->
+<div id="companyModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 720px;">
+        <div class="modal-header">
+            <h3 id="companyModalTitle" class="modal-title">Nova Empresa</h3>
+            <span class="modal-close-btn" id="closeCompanyModalBtn">&times;</span>
+        </div>
+        <div class="modal-body-scroll">
+            <form id="companyForm" class="space-y-4">
+                <input type="hidden" id="companyId">
+                <div>
+                    <label class="form-label-xs">Nome da Empresa</label>
+                    <input type="text" id="companyNome" required class="input-field" placeholder="Ex: TecnoFix Manutenções">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label-xs">Telefone</label>
+                        <input type="text" id="companyTelefone" class="input-field" placeholder="Ex: +258 84 123 4567">
+                    </div>
+                    <div>
+                        <label class="form-label-xs">Província</label>
+                        <select id="companyProvincia" class="input-field">
+                            <option value="">Selecione a Província</option>
+                            <option>Maputo (Cidade)</option>
+                            <option>Maputo (Província)</option>
+                            <option>Gaza</option>
+                            <option>Inhambane</option>
+                            <option>Sofala</option>
+                            <option>Manica</option>
+                            <option>Tete</option>
+                            <option>Zambézia</option>
+                            <option>Nampula</option>
+                            <option>Cabo Delgado</option>
+                            <option>Niassa</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label-xs">Email</label>
+                    <input type="email" id="companyEmail" class="input-field" placeholder="empresa@exemplo.com">
+                </div>
+                <div>
+                    <label class="form-label-xs">Endereço</label>
+                    <input type="text" id="companyEndereco" class="input-field" placeholder="Ex: Av. Julius Nyerere, 123, Maputo">
+                </div>
+                <div>
+                    <label class="form-label-xs">Serviços Prestados</label>
+                    <input type="text" id="companyServicos" class="input-field" placeholder="Ex: Pintura, Hidráulica, Elétrica">
+                </div>
+                <div>
+                    <label class="form-label-xs">Observações</label>
+                    <textarea id="companyObs" rows="3" class="input-field" placeholder="Notas internas"></textarea>
+                </div>
+                <button type="submit" class="main-button mt-2">Guardar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL HISTÓRICO EMPRESA -->
+<div id="companyHistoryModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 860px;">
+        <div class="modal-header">
+            <h3 id="companyHistoryTitle" class="modal-title">Histórico da Empresa</h3>
+            <div class="flex items-center gap-2">
+                <button id="printHistoryBtn" class="btn-theme">Imprimir</button>
+                <span class="modal-close-btn" id="closeCompanyHistoryBtn">&times;</span>
+            </div>
+        </div>
+        <div id="companyHistoryBody" class="modal-body-scroll">
+            <!-- conteúdo do histórico renderizado via JS -->
+        </div>
+    </div>
+</div>

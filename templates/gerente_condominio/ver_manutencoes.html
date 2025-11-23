@@ -1,0 +1,748 @@
+{% extends "gerente_condominio/base.html" %}
+
+{% block title %}Gerenciar Manutenções{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* --- Estilos do Modal (Idêntico ao anterior) --- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        width: 90%;
+        max-width: 600px;
+        /* Um pouco mais largo para caber os formulários */
+        max-height: 90vh;
+        overflow-y: auto;
+        /* Caso o form seja longo */
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6B7280;
+    }
+
+    .input-field,
+    .select-field,
+    .textarea-field {
+        border: 1px solid #D1D5DB;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        width: 100%;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        background-color: #fff;
+    }
+
+    .input-field:focus,
+    .select-field:focus,
+    .textarea-field:focus {
+        outline: none;
+        border-color: #e74c3c;
+        box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+    }
+
+    .main-button {
+        background-color: #e74c3c;
+        color: white;
+        font-weight: 600;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+        width: 100%;
+        border: none;
+        cursor: pointer;
+    }
+
+    .main-button:hover {
+        background-color: #c0392b;
+    }
+
+    /* --- Estilos das Abas (Tabs) --- */
+    .tab-btn {
+        padding: 10px 20px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        color: #6B7280;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+        border-bottom: 2px solid #e74c3c;
+        color: #e74c3c;
+    }
+
+    .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Ocultar seções do formulário */
+    .form-section {
+        display: none;
+    }
+
+    .form-section.active {
+        display: block;
+    }
+
+    /* Sucesso */
+    .success-alert {
+        background-color: #e6f7ee;
+        color: #1abc9c;
+        border: 1px solid #b3e6d2;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow border border-gray-200">
+
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold text-gray-800">Gerenciar Manutenções</h2>
+        <button id="add-btn" class="main-button w-auto px-4 py-2">
+            Nova Manutenção
+        </button>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="success-alert mb-4" role="alert">
+        <p class="text-sm">{{ message }}</p>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="flex border-b border-gray-200 mb-6">
+        <button class="tab-btn active" onclick="openTab(event, 'tab-geral')">Gerais</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-especifica')">Específicas</button>
+    </div>
+
+    <div id="tab-geral" class="tab-content active overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Código
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Empresa
+                        Contratada</th>
+
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Descricao
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Tipo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Problema
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Estado
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Anexos
+                                            </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                {% for m in manutencoes_gerais %}
+                <tr>
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ m.codigo }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ m.empresa.nome }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ m.descricao|slice:":50" }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ m.get_tipo_display }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ m.problema }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        {% if m.estado == 'Pendente' %}bg-yellow-100 text-yellow-800
+                        {% elif m.estado == 'Concluído' %}bg-green-100 text-green-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ m.estado }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {% if m.anexos.all %}
+                        <a href="#" title="Ver Anexos" class="text-red-500 hover:text-red-700 font-bold"
+                            onclick="event.preventDefault(); abrirModalAnexos('geral', '{{ m.id }}', '{{ m.codigo }}');">
+                            📎 ({{ m.anexos.count }})
+                        </a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 flex gap-2">
+                        <button onclick="abrirEdicao('geral', '{{ m.id }}')"
+                            class="text-teal-600 hover:text-teal-900 font-semibold text-sm">
+                            Editar
+                        </button>
+
+                        <form method="post" action="{% url 'excluir_manutencao' tipo='geral' id=m.id %}"
+                            onsubmit="return confirm('Tem certeza que deseja excluir a Manutenção {{ m.codigo }}? Esta ação é irreversível.');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-600 hover:text-red-900 font-semibold text-sm">
+                                Excluir
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhuma manutenção geral encontrada.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tab-especifica" class="tab-content overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Código
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Empresa
+                        Contratada</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Casa</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Tipo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Local</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Estado
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Anexos
+                                            </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                {% for m in manutencoes_especificas %}
+                <tr>
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ m.codigo }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ m.empresa.nome }}</td>
+                    <td class="px-6 py-4 text-red-500 font-bold">{{ m.casa.numero }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ m.get_tipo_display }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ m.local_afetado }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        {% if m.estado == 'Pendente' %}bg-yellow-100 text-yellow-800
+                        {% elif m.estado == 'Concluído' %}bg-green-100 text-green-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ m.estado }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {% if m.anexos.all %}
+                        <a href="#" title="Ver Anexos" class="text-red-500 hover:text-red-700 font-bold"
+                            onclick="event.preventDefault(); abrirModalAnexos('especifica', '{{ m.id }}', '{{ m.codigo }}');">
+                            📎 ({{ m.anexos.count }})
+                        </a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 flex gap-2">
+                        <button onclick="abrirEdicao('especifica', '{{ m.id }}')"
+                            class="text-teal-600 hover:text-teal-900 font-semibold text-sm">
+                            Editar
+                        </button>
+
+                        <form method="post" action="{% url 'excluir_manutencao' tipo='especifica' id=m.id %}"
+                            onsubmit="return confirm('Tem certeza que deseja excluir a Manutenção {{ m.codigo }}? Esta ação é irreversível.');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-600 hover:text-red-900 font-semibold text-sm">
+                                Excluir
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">Nenhuma manutenção específica
+                        encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="add-modal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-btn" id="close-add-modal">&times;</span>
+        <h1 class="text-xl font-bold text-center text-gray-800 mb-6">Nova Manutenção</h1>
+
+        <form method="post" action="{% url 'add_manutencao' %}" id="form-manutencao" class="space-y-4"
+            enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="flex justify-center gap-6 mb-6 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="classe_manutencao" value="geral" checked
+                        class="form-radio text-red-600 h-4 w-4" onclick="toggleFormType('geral')">
+                    <span class="ml-2 text-gray-700 font-medium">Geral</span>
+                </label>
+                <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="classe_manutencao" value="especifica"
+                        class="form-radio text-red-600 h-4 w-4" onclick="toggleFormType('especifica')">
+                    <span class="ml-2 text-gray-700 font-medium">Específica</span>
+                </label>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Empresa Executora</label>
+                <select name="empresa" class="select-field" required>
+                    <option value="">Selecione uma empresa...</option>
+                    {% for emp in empresas %}
+                    <option value="{{ emp.id }}">{{ emp.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                <textarea name="descricao" rows="3" class="textarea-field"
+                    placeholder="Descreva o detalhe da manutenção..."></textarea>
+            </div>
+
+            <div id="fields-geral" class="form-section active space-y-4 border-t pt-4 mt-4">
+                <h3 class="text-sm font-bold text-red-500 uppercase">Detalhes Gerais</h3>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoria Geral</label>
+                    <select name="tipo_geral" id="select-tipo-geral" class="select-field">
+                        <option value="">Selecione uma categoria...</option>
+                        <option value="equipamentos">Equipamentos</option>
+                        <option value="sistemas">Sistemas</option>
+                        <option value="estrutura-fisica">Estrutura Física</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Problema Identificado</label>
+                    <select name="problema" id="select-problema-geral" class="select-field">
+                        <option value="">Selecione a categoria primeiro</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="fields-especifica" class="form-section space-y-4 border-t pt-4 mt-4">
+                <h3 class="text-sm font-bold text-red-500 uppercase">Detalhes Específicos</h3>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Casa Afetada</label>
+                    <select name="casa" class="select-field">
+                        <option value="">Selecione a casa...</option>
+                        {% for c in casas %}
+                        <option value="{{ c.id }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoria Específica</label>
+                    <select name="tipo_especifico" id="select-tipo-especifico" class="select-field">
+                        <option value="">Selecione uma categoria...</option>
+                        <option value="hidraulica">Hidráulica</option>
+                        <option value="eletrica">Elétrica</option>
+                        <option value="caixilharia">Caixilharia</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Componente</label>
+                        <select name="componente" id="select-componente-especifico" class="select-field">
+                            <option value="">Selecione a categoria primeiro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Local</label>
+                        <input type="text" name="local_afetado" class="input-field" placeholder="Ex: Banheiro Suite">
+                    </div>
+                </div>
+            </div>
+            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Anexos
+                    (Fotos/Documentos)</label>
+                                <input type="file" name="anexos" multiple                     class="w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-red-50 file:text-red-700
+                      hover:file:bg-red-100" />
+                                <p class="mt-1 text-xs text-gray-500">Selecione uma ou mais fotos para anexar.</p>
+                            </div>
+            <button type="submit" class="main-button mt-6">Salvar Manutenção</button>
+        </form>
+    </div>
+</div>
+
+<div id="anexos-modal" class="modal-overlay">
+    <div class="modal-content max-w-lg">
+        <span class="close-btn" id="close-anexos-modal">&times;</span>
+        <h2 class="text-xl font-bold text-center text-gray-800 mb-4">Anexos da Manutenção <span id="anexos-codigo"
+                class="text-red-500"></span></h2>
+
+        <div id="anexos-lista" class="space-y-3 p-4 border rounded-lg bg-gray-50">
+            <p class="text-gray-500 text-sm">Carregando anexos...</p>
+        </div>
+
+        <p class="mt-4 text-xs text-gray-500 text-center">Clique no nome do arquivo para fazer o download/visualizar.
+        </p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // --- DADOS DE CONFIGURAÇÃO (Seu código JSON) ---
+    const problemaOptionsGeral = {
+        'equipamentos': [
+            { value: 'bombas', text: 'Bombas' },
+            { value: 'elevadores', text: 'Elevadores' },
+            { value: 'geradores', text: 'Geradores' },
+            { value: 'climatizadores', text: 'Climatizadores' },
+            { value: 'extintores', text: 'Extintores' }
+        ],
+        'sistemas': [
+            { value: 'eletrico', text: 'Elétrico' },
+            { value: 'hidraulico', text: 'Hidráulico' },
+            { value: 'gas', text: 'Gás' },
+            { value: 'seguranca', text: 'Segurança (Câmeras, Alarmes)' },
+            { value: 'ti', text: 'TI (Rede, Internet)' }
+        ],
+        'estrutura-fisica': [
+            { value: 'pisos', text: 'Pisos' },
+            { value: 'paredes', text: 'Paredes' },
+            { value: 'telhados', text: 'Telhados / Lajes' },
+            { value: 'caixilharia', text: 'Caixilharia (Janelas, Portas)' },
+            { value: 'pintura', text: 'Pintura' }
+        ]
+    };
+
+    const componentesEspecificos = {
+        'hidraulica': [
+            { value: 'tubulacoes_pvc', text: 'Tubulações - PVC' },
+            { value: 'tubulacoes_ferro', text: 'Tubulações - Ferro Galvanizado' },
+            { value: 'bombas_hidraulicas', text: 'Bombas Hidráulicas' },
+            { value: 'reservatorios', text: 'Reservatórios e Caixas de Água' },
+            { value: 'valvulas_registros', text: 'Válvulas, Registros e Conexões' }
+        ],
+        'eletrica': [
+            { value: 'quadro_distribuicao', text: 'Quadro de Distribuição' },
+            { value: 'disjuntores_fusivel', text: 'Disjuntores e Fusíveis' },
+            { value: 'transformadores', text: 'Transformadores e Geradores' },
+            { value: 'cabos_circuitos', text: 'Cabos e Circuitos Elétricos' },
+            { value: 'iluminacao_interna', text: 'Iluminação Interna' },
+            { value: 'iluminacao_externa', text: 'Iluminação Externa' },
+            { value: 'tomadas_interruptores', text: 'Tomadas, Interruptores e Sensores' },
+            { value: 'sistemas_emergencia', text: 'Sistemas de Emergência (UPS, Iluminação de Segurança)' }
+        ],
+        'caixilharia': [
+            { value: 'janela_aluminio', text: 'Janela - Alumínio' },
+            { value: 'janela_pvc', text: 'Janela - PVC' },
+            { value: 'janela_madeira', text: 'Janela - Madeira' },
+            { value: 'porta_aluminio', text: 'Porta - Alumínio' },
+            { value: 'porta_madeira', text: 'Porta - Madeira' },
+            { value: 'porta_ferro', text: 'Porta - Ferro' },
+            { value: 'fachada', text: 'Fachada' },
+            { value: 'veneziana', text: 'Veneziana' },
+            { value: 'claraboia', text: 'Claraboia' },
+            { value: 'vidro_temperado', text: 'Vidro Temperado' }
+        ]
+    };
+
+    // --- VARIÁVEIS GLOBAIS ---
+    const modal = document.getElementById('add-modal');
+    const form = document.getElementById('form-manutencao');
+    const modalTitle = modal.querySelector('h1');
+    const submitBtn = modal.querySelector('button[type="submit"]');
+
+    // --- NOVAS VARIÁVEIS GLOBAIS PARA O MODAL DE ANEXOS ---
+    const anexosModal = document.getElementById('anexos-modal');
+    const closeAnexosModal = document.getElementById('close-anexos-modal');
+    const anexosLista = document.getElementById('anexos-lista');
+    const anexosCodigo = document.getElementById('anexos-codigo');
+
+    // --- FUNÇÃO PARA ABRIR MODAL DE ANEXOS ---
+    function abrirModalAnexos(tipo, id, codigo) {
+        // 1. Ajusta o título do modal
+        anexosCodigo.textContent = codigo;
+        anexosLista.innerHTML = '<p class="text-gray-500 text-sm">Carregando anexos...</p>';
+        anexosModal.style.display = 'flex';
+
+        // 2. Busca dados via AJAX
+        // Reutilizamos o endpoint 'get_detalhes_manutencao' que agora retorna 'anexos_existentes'
+        fetch(`/gerente/manutencoes/get-detalhes/${tipo}/${id}/`)
+            .then(res => res.json())
+            .then(data => {
+                anexosLista.innerHTML = ''; // Limpa o "Carregando..."
+                
+                if (data.error) {
+                    anexosLista.innerHTML = `<p class="text-red-500 text-sm">Erro ao carregar: ${data.error}</p>`;
+                    return;
+                }
+
+                const anexos = data.anexos_existentes || [];
+
+                if (anexos.length === 0) {
+                    anexosLista.innerHTML = '<p class="text-gray-500 text-sm">Nenhum anexo encontrado para esta manutenção.</p>';
+                } else {
+                    anexos.forEach(anexo => {
+                        // Cria o item de anexo
+                        const anexoDiv = document.createElement('div');
+                        anexoDiv.className = 'flex items-center justify-between p-2 rounded-md bg-white shadow-sm';
+                        
+                        // Link de Download
+                        const link = document.createElement('a');
+                        link.href = anexo.url;
+                        link.target = '_blank';
+                        link.className = 'text-sm text-red-600 hover:text-red-800 truncate';
+                        link.title = anexo.nome;
+                        link.innerHTML = `📎 ${anexo.nome}`; // Ícone e nome
+                        
+                        // ID do anexo para possível exclusão futura (opcional)
+                        // const idSpan = document.createElement('span');
+                        // idSpan.textContent = `ID: ${anexo.id}`;
+
+                        anexoDiv.appendChild(link);
+                        // anexoDiv.appendChild(idSpan); // Para debug
+                        anexosLista.appendChild(anexoDiv);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error("Erro ao buscar anexos:", err);
+                anexosLista.innerHTML = '<p class="text-red-500 text-sm">Erro de conexão ao carregar anexos.</p>';
+            });
+    }
+
+    // --- EVENT LISTENERS PARA FECHAR MODAL DE ANEXOS ---
+    closeAnexosModal.addEventListener('click', () => {
+        anexosModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === anexosModal) {
+            anexosModal.style.display = 'none';
+        }
+    });
+
+    // URLs Base (Django URLs)
+    const urlAdicionar = "{% url 'add_manutencao' %}";
+
+    // --- FUNÇÃO PARA ABRIR MODO CRIAÇÃO ---
+    // Atualize seu botão "Nova Manutenção" para chamar esta função: onclick="abrirCriacao()"
+    function abrirCriacao() {
+        // 1. Resetar o form
+        form.reset();
+        form.action = urlAdicionar;
+
+        // 2. Ajustar textos
+        modalTitle.innerText = "Nova Manutenção";
+        submitBtn.innerText = "Criar Manutenção";
+
+        // 3. Habilitar troca de tipo
+        document.querySelectorAll('input[name="classe_manutencao"]').forEach(r => {
+            r.disabled = false;
+            if (r.value === 'geral') r.checked = true;
+        });
+        toggleFormType('geral');
+
+        modal.style.display = 'flex';
+    }
+
+    // --- FUNÇÃO PARA ABRIR MODO EDIÇÃO ---
+    function abrirEdicao(tipo, id) {
+        // 1. Buscar dados via AJAX
+        fetch(`/gerente/manutencoes/get-detalhes/${tipo}/${id}/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) { alert(data.error); return; }
+
+                // 2. Ajustar textos e Action do Form
+                modalTitle.innerText = "Editar Manutenção (" + data.codigo + ")";
+                submitBtn.innerText = "Salvar Alterações";
+                form.action = `/gerente/manutencoes/editar/${tipo}/${id}/`;
+
+                // 3. Preencher campos comuns
+                // Nota: inputs devem ter name="empresa", name="descricao" etc
+                form.querySelector('[name="empresa"]').value = data.empresa;
+                form.querySelector('[name="descricao"]').value = data.descricao;
+
+                // 4. Configurar Tipo (Radio Buttons)
+                const radios = document.querySelectorAll('input[name="classe_manutencao"]');
+                radios.forEach(r => {
+                    if (r.value === tipo) r.checked = true;
+                    r.disabled = true; // Bloqueia mudança de tipo na edição
+                });
+                toggleFormType(tipo);
+
+                // 5. Preencher Campos Específicos e Dependentes
+                if (tipo === 'geral') {
+                    const selectTipo = document.getElementById('select-tipo-geral');
+                    selectTipo.value = data.tipo_categoria;
+
+                    // Dispara a população do segundo select
+                    populateSelect('select-problema-geral', problemaOptionsGeral[data.tipo_categoria]);
+
+                    // Seleciona o valor correto
+                    document.getElementById('select-problema-geral').value = data.sub_item;
+
+                } else {
+                    form.querySelector('[name="casa"]').value = data.casa;
+                    form.querySelector('[name="local_afetado"]').value = data.local_afetado;
+
+                    const selectTipo = document.getElementById('select-tipo-especifico');
+                    selectTipo.value = data.tipo_categoria;
+
+                    // Dispara a população do segundo select
+                    populateSelect('select-componente-especifico', componentesEspecificos[data.tipo_categoria]);
+
+                    // Seleciona o valor correto
+                    document.getElementById('select-componente-especifico').value = data.sub_item;
+                }
+
+                modal.style.display = 'flex';
+            })
+            .catch(err => console.error(err));
+    }
+
+    // --- FUNÇÃO PARA POPULAR SELECTS ---
+    function populateSelect(targetSelectId, options) {
+        const selectEl = document.getElementById(targetSelectId);
+        selectEl.innerHTML = '<option value="">Selecione...</option>'; // Resetar opções
+
+        if (options && options.length > 0) {
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.text;
+                selectEl.appendChild(option);
+            });
+            selectEl.disabled = false;
+        } else {
+            selectEl.innerHTML = '<option value="">Selecione a categoria primeiro</option>';
+            selectEl.disabled = true;
+        }
+    }
+
+    // Event Listeners para mudança dinâmica nos selects (igual você já tinha)
+    document.getElementById('select-tipo-geral').addEventListener('change', function () {
+        populateSelect('select-problema-geral', problemaOptionsGeral[this.value]);
+    });
+
+    document.getElementById('select-tipo-especifico').addEventListener('change', function () {
+        populateSelect('select-componente-especifico', componentesEspecificos[this.value]);
+    });
+
+    // --- EVENT LISTENERS (MANUTENÇÃO GERAL) ---
+    const selectTipoGeral = document.getElementById('select-tipo-geral');
+
+    selectTipoGeral.addEventListener('change', function () {
+        const categoria = this.value;
+        const opcoes = problemaOptionsGeral[categoria] || [];
+        populateSelect('select-problema-geral', opcoes);
+    });
+
+    // --- EVENT LISTENERS (MANUTENÇÃO ESPECÍFICA) ---
+    const selectTipoEspecifico = document.getElementById('select-tipo-especifico');
+
+    selectTipoEspecifico.addEventListener('change', function () {
+        const categoria = this.value;
+        const opcoes = componentesEspecificos[categoria] || [];
+        populateSelect('select-componente-especifico', opcoes);
+    });
+
+
+    // --- LÓGICA DAS ABAS (Mantida igual) ---
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+            tabcontent[i].classList.remove('active');
+        }
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        document.getElementById(tabName).classList.add('active');
+        evt.currentTarget.className += " active";
+    }
+
+    // --- LÓGICA DO MODAL (Mantida igual) ---
+    const addBtn = document.getElementById('add-btn');
+    const addModal = document.getElementById('add-modal');
+    const closeAddModal = document.getElementById('close-add-modal');
+
+    addBtn.addEventListener('click', () => {
+        addModal.style.display = 'flex';
+    });
+
+    closeAddModal.addEventListener('click', () => {
+        addModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === addModal) {
+            addModal.style.display = 'none';
+        }
+    });
+
+    // --- LÓGICA DO RADIO BUTTON (Mantida igual) ---
+    function toggleFormType(type) {
+        const fieldsGeral = document.getElementById('fields-geral');
+        const fieldsEspecifica = document.getElementById('fields-especifica');
+
+        if (type === 'geral') {
+            fieldsGeral.style.display = 'block';
+            fieldsEspecifica.style.display = 'none';
+
+            // Garante que o select "target" esteja no estado correto visualmente
+            document.getElementById('select-problema-geral').disabled = document.getElementById('select-tipo-geral').value === "";
+        } else {
+            fieldsGeral.style.display = 'none';
+            fieldsEspecifica.style.display = 'block';
+
+            // Garante que o select "target" esteja no estado correto visualmente
+            document.getElementById('select-componente-especifico').disabled = document.getElementById('select-tipo-especifico').value === "";
+        }
+    }
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', () => {
+        toggleFormType('geral');
+        // Bloquear selects secundários no início
+        document.getElementById('select-problema-geral').disabled = true;
+        document.getElementById('select-componente-especifico').disabled = true;
+    });
+</script>
+{% endblock %}

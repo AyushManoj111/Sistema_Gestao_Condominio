@@ -1,0 +1,17 @@
+<nav class="navbar">
+    <div class="navbar-left">
+        <div class="navbar-brand">
+            {% load static %}
+            <img src="{% static 'images/emose_logo.png' %}" alt="Logo" class="h-14 object-contain" />
+        </div>
+    </div>
+    <div class="navbar-right flex items-center gap-4">
+        <button id="themeToggle" class="btn-theme" title="Alternar tema" aria-label="Alternar tema">🌙</button>
+        <button id="langToggle" class="btn-theme" title="Alternar idioma" aria-label="Alternar idioma">PT</button>
+        <div class="user-info flex items-center gap-2 text-red-500 text-sm">
+            <div class="user-avatar">GC</div>
+            <span class="hidden sm:inline" data-i18n="userRole">Gerente Condomínio</span>
+        </div>
+        <button class="btn-logout" onclick="window.location.href='#'" data-i18n="logout">Sair</button>
+    </div>
+</nav>

@@ -1,0 +1,313 @@
+{% extends "gerente_condominio/base.html" %}
+
+{% block title %}Gerenciar Inquilinos{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Estilos do Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none; /* Inicia oculto */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        max-width: 500px;
+        width: 90%;
+        position: relative;
+    }
+    .close-modal {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6B7280;
+        transition: color 0.2s;
+    }
+    .close-modal:hover { color: #2c3e50; }
+    .input-field {
+        border: 1px solid #D1D5DB;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        width: 100%;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+    .input-field:focus { 
+        outline: none; 
+        border-color: #e74c3c; 
+        box-shadow: 0 0 0 2px rgba(14, 165, 164, 0.2); 
+    }
+    .main-button {
+        background-color: #e74c3c; /* Cor primária do 2º HTML */
+        color: white;
+        font-weight: 600;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+        width: 100%;
+    }
+    .main-button:hover { background-color: #04787c; }
+
+    /* Tema escuro */
+    .theme-dark .modal-content { background-color: #0f1620; border: 1px solid #000000; }
+    .theme-dark .close-modal { color: #94a3b8; }
+    .theme-dark .input-field { background: #ffcccc; color: #e2e8f0; border-color: #000000; }
+    .theme-dark .input-field::placeholder { color: #94a3b8; }
+    .theme-dark .input-field:focus { border-color: #e74c3c; box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2); }
+
+    /* Estilo para a mensagem de sucesso */
+    .success-alert {
+        background-color: #e6f7ee;
+        color: #1abc9c;
+        border: 1px solid #b3e6d2;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+
+    /* Ajustes específicos desta página para tema escuro */
+    .theme-dark thead.bg-gray-50 { background: #ffcccc; }
+    .theme-dark thead.bg-gray-50 th { color: #cbd5e1; border-color: #000000; }
+    .theme-dark tbody.bg-white { background: #0f1620; }
+    .theme-dark .modal-content h1 { color: #e2e8f0; }
+    .theme-dark .modal-content h2 { color: #cbd5e1; }
+    .theme-dark .modal-content label { color: #cbd5e1; }
+    .theme-dark .success-alert {
+        background-color: #ffffff;
+        color: #e74c3c;
+        border: 1px solid #000000;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container bg-white p-8 rounded-lg shadow border border-gray-200">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold text-gray-800" data-i18n="tenantsList">Lista de Inquilinos</h2>
+        <button id="add-button" class="main-button w-auto px-4 py-2" data-i18n="addTenant">
+            Adicionar Novo Inquilino
+        </button>
+    </div>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="success-alert mb-4" role="alert">
+        <p class="text-sm">{{ message }}</p>
+    </div>
+    {% endfor %}
+    {% endif %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider" data-i18n="name">Nome</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider" data-i18n="email">Email</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider" data-i18n="contact">Contacto</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider" data-i18n="branch">Ramo</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider" data-i18n="house">Casa</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-red-500 uppercase tracking-wider" data-i18n="actions">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                {% for inquilino in inquilinos %}
+                <tr class="tenant-row" data-id="{{ inquilino.id }}" data-nome="{{ inquilino.nome }}" data-email="{{ inquilino.email }}" data-contacto="{{ inquilino.contacto }}" data-ramo="{{ inquilino.ramo }}">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ inquilino.nome }}</td>
+                    <td class="px-6 py-4 text-sm text-red-500">{{ inquilino.email }}</td>
+                    <td class="px-6 py-4 text-sm text-red-500">{{ inquilino.contacto }}</td>
+                    <td class="px-6 py-4 text-sm text-red-500">{{ inquilino.ramo }}</td>
+                    <td class="px-6 py-4 text-sm text-red-500">{{ inquilino.casa.numero }}</td>
+                    <td class="px-6 py-4 text-left text-sm font-medium flex items-center gap-2">
+                        <button class="edit-button text-teal-600 hover:text-teal-800" data-id="{{ inquilino.id }}" title="Editar">
+                            <svg class="w-5 h-5 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <a href="#" class="delete-btn text-red-600 hover:text-red-800" data-id="{{ inquilino.id }}" title="Deletar">
+                            <svg class="w-5 h-5 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="add-modal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('add-modal')">&times;</span>
+        <h1 class="text-xl font-bold text-center text-gray-800 mb-4" data-i18n="addTenantTitle">Adicionar Novo Inquilino</h1>
+        <form method="post" action="{% url 'add_inquilino' %}">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="add-nome" class="block text-xs font-medium text-gray-600" data-i18n="name">Nome</label>
+                    <input type="text" id="add-nome" name="nome" required class="input-field">
+                </div>
+                <div>
+                    <label for="add-email" class="block text-xs font-medium text-gray-600" data-i18n="email">Email</label>
+                    <input type="email" id="add-email" name="email" required class="input-field">
+                </div>
+                <div>
+                    <label for="add-contacto" class="block text-xs font-medium text-gray-600" data-i18n="contact">Contacto</label>
+                    <input type="tel" id="add-contacto" name="contacto" required class="input-field">
+                </div>
+                <div>
+                    <label for="add-ramo" class="block text-xs font-medium text-gray-600" data-i18n="activityBranch">Ramo de atividade</label>
+                    <select id="add-ramo" name="ramo" required class="input-field">
+                        <option value="" disabled selected data-i18n="selectBranch">Selecione o ramo</option>
+                        <option value="Comércio" data-i18n="trade">Comércio</option>
+                        <option value="Serviços" data-i18n="services">Serviços</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="main-button mt-4" data-i18n="createTenant">Criar Inquilino</button>
+        </form>
+    </div>
+</div>
+
+<div id="edit-modal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('edit-modal')">&times;</span>
+        <h1 class="text-xl font-bold text-center text-gray-800 mb-4" data-i18n="editTenantTitle">Editar Inquilino</h1>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div class="space-y-3">
+                <h2 class="text-base font-semibold text-gray-700" data-i18n="personalData">Dados Pessoais</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-nome" class="block text-xs font-medium text-gray-600" data-i18n="name">Nome</label>
+                        <input type="text" id="edit-nome" name="nome" required class="input-field">
+                    </div>
+                    <div>
+                        <label for="edit-email" class="block text-xs font-medium text-gray-600" data-i18n="email">Email</label>
+                        <input type="email" id="edit-email" name="email" required class="input-field">
+                    </div>
+                    <div>
+                        <label for="edit-contacto" class="block text-xs font-medium text-gray-600" data-i18n="contact">Contacto</label>
+                        <input type="tel" id="edit-contacto" name="contacto" required class="input-field">
+                    </div>
+
+                    <div>
+                        <label for="edit-ramo" class="block text-xs font-medium text-gray-600" data-i18n="activityBranch">Ramo de atividade</label>
+                        <select id="edit-ramo" name="ramo" required class="input-field">
+                            <option value="Comércio" data-i18n="trade">Comércio</option>
+                            <option value="Serviços" data-i18n="services">Serviços</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="w-full mt-4 main-button" data-i18n="saveChanges">Salvar Alterações</button>
+        </form>
+    </div>
+</div>
+
+<div id="delete-modal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('delete-modal')">&times;</span>
+        <h1 class="text-xl font-bold text-center text-gray-800 mb-4">Confirmar Exclusão</h1>
+        <p class="text-gray-700 mb-6">Tem certeza de que deseja excluir este inquilino? Esta ação não pode ser desfeita.</p>
+        <div class="flex justify-end gap-4">
+            <button onclick="closeModal('delete-modal')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Cancelar</button>
+            <button id="confirm-delete-btn" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Excluir</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    document.getElementById('add-button').addEventListener('click', () => {
+        openModal('add-modal');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.edit-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                // Garante que a seleção do elemento pai seja correta, mesmo se o clique for no SVG.
+                const row = event.target.closest('.tenant-row');
+                const id = row.dataset.id;
+                const nome = row.dataset.nome;
+                const email = row.dataset.email;
+                const contacto = row.dataset.contacto;
+                const ramo = row.dataset.ramo;
+                document.getElementById('edit-nome').value = nome;
+                document.getElementById('edit-email').value = email;
+                document.getElementById('edit-contacto').value = contacto;
+                if (ramo) document.getElementById('edit-ramo').value = ramo;
+
+                // Set the form action for editing
+                document.getElementById('edit-modal').querySelector('form').action = `/gerente/edit-inquilino/${id}/`;
+
+                openModal('edit-modal');
+            });
+        });
+
+        let deleteId = null;
+
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                deleteId = button.dataset.id;
+                openModal('delete-modal');
+            });
+        });
+
+        document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+            if (deleteId) {
+                fetch(`/gerente/delete-inquilino/${deleteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Erro ao excluir inquilino.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao excluir inquilino.');
+                });
+                closeModal('delete-modal');
+                deleteId = null;
+            }
+        });
+
+        // Fecha o modal ao clicar fora dele
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) {
+                    closeModal(overlay.id);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

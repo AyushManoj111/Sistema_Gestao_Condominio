@@ -1,0 +1,311 @@
+{% extends 'gerente_condominio/base.html' %}
+
+{% block title %}{{ titulo_pagina }} | Gerenciar Notícias{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Variáveis do Tema (Baseado no seu exemplo: #e74c3c e cinzas) */
+    :root {
+        --primary-color: #e74c3c;
+        --secondary-color: #34495e;
+        --light-bg: #ecf0f1;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Estilos de Cartão e Sombra */
+    .card-shadow {
+        box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border-radius: 0.5rem;
+        transition: transform 0.2s;
+    }
+
+    .card-shadow:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Estilo de Botão Primário (Baseado em .main-button) */
+    .btn-primary-style {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary-style:hover {
+        background-color: #c0392b;
+        /* Tom mais escuro */
+    }
+
+    /* Estilo de Campo de Input (Baseado em .input-field) */
+    .input-field-style {
+        border: 1px solid #D1D5DB;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        width: 100%;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .input-field-style:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+    }
+
+    /* Estilo da Tabela (Baseado em .table-header) */
+    .table-header-style {
+        background-color: var(--light-bg) !important;
+        color: var(--secondary-color) !important;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .table-row-hover:hover {
+        background-color: #f7f9fa;
+        /* Hover mais suave */
+        cursor: pointer;
+    }
+
+    /* Cores das ações para serem consistentes com seu tema (texto vermelho e hover azul/verde) */
+    .text-primary-action {
+        color: var(--primary-color);
+    }
+
+    .text-primary-action:hover {
+        color: #0d9488;
+    }
+
+    /* Um verde/azul para hover */
+
+    /* Alertas de Mensagens (Baseado em .success-alert) */
+    .alert-success-style {
+        background-color: #e6f7ee;
+        color: #1abc9c;
+        border: 1px solid #b3e6d2;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+
+    .alert-error-style {
+        background-color: #fcebeb;
+        color: #c0392b;
+        border: 1px solid #e74c3c;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+
+    /* Utilitário para ícones de ação na tabela */
+    .action-icon-wrapper {
+        display: inline-flex;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="bg-white p-6 md:p-8 rounded-lg card-shadow">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">📰 {{ titulo_pagina }}</h2>
+        {% if acao == 'lista' %}
+        <a href="{% url 'adicionar_noticia' %}" class="btn-primary-style w-auto flex items-center gap-1">
+            <i class="bi bi-plus-circle"></i> Adicionar Nova Notícia
+        </a>
+        {% elif acao != 'adicionar' %}
+        <a href="{% url 'gerenciar_noticias' %}"
+            class="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-100">
+            <i class="bi bi-arrow-left"></i> Voltar para a Lista
+        </a>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    {% if message.tags == 'success' %}
+    <div class="alert-success-style mb-4 flex justify-between items-center" role="alert">
+        <p class="text-sm font-medium">{{ message }}</p>
+        <button type="button" class="text-[#1abc9c] hover:text-[#0d9488] font-bold"
+            onclick="this.parentElement.style.display='none';">&times;</button>
+    </div>
+    {% elif message.tags == 'error' %}
+    <div class="alert-error-style mb-4 flex justify-between items-center" role="alert">
+        <p class="text-sm font-medium">{{ message }}</p>
+        <button type="button" class="text-[#c0392b] hover:text-[#922b21] font-bold"
+            onclick="this.parentElement.style.display='none';">&times;</button>
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+    {% if acao == 'adicionar' or acao == 'editar' %}
+    <div class="mt-4 bg-white p-6 card-shadow border-t-4" style="border-color: var(--primary-color);">
+
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">
+            <i class="bi bi-file-earmark-text"></i> {% if acao == 'editar' %}Editar Notícia: {{ noticia.titulo }}{% else
+            %}Nova Publicação{% endif %}
+        </h3>
+
+        <form method="POST"
+            action="{% if acao == 'editar' %}{% url 'editar_noticia' pk=noticia.pk %}{% else %}{% url 'adicionar_noticia' %}{% endif %}"
+            class="space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label for="id_titulo" class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                <input type="text" class="input-field-style {% if erros.titulo %}border-red-500{% endif %}"
+                    id="id_titulo" name="titulo" value="{{ titulo_input|default_if_none:'' }}" required>
+                {% if erros.titulo %}<p class="text-xs text-red-500 mt-1">{{ erros.titulo }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label for="id_conteudo" class="block text-sm font-medium text-gray-700 mb-1">Conteúdo</label>
+                <textarea class="input-field-style h-40 {% if erros.conteudo %}border-red-500{% endif %}"
+                    id="id_conteudo" name="conteudo" rows="7"
+                    required>{{ conteudo_input|default_if_none:'' }}</textarea>
+                {% if erros.conteudo %}<p class="text-xs text-red-500 mt-1">{{ erros.conteudo }}</p>{% endif %}
+            </div>
+
+            <div class="pt-2 flex gap-3">
+                <button type="submit" class="btn-primary-style flex items-center gap-1 w-auto">
+                    <i class="bi bi-save"></i> {% if acao == 'editar' %}Salvar Alterações{% else %}Publicar{% endif %}
+                </button>
+                <a href="{% url 'gerenciar_noticias' %}"
+                    class="px-4 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-100">Cancelar</a>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if acao == 'detalhe' %}
+    <div class="mt-4 bg-white p-6 card-shadow">
+        <h3 class="text-3xl font-bold text-gray-900 mb-2">{{ noticia.titulo }}</h3>
+        <p class="text-sm text-gray-500 mb-4">
+            <i class="bi bi-clock"></i> Publicado em: {{ noticia.data_publicacao|date:"d/m/Y H:i" }}
+        </p>
+        <hr class="mb-6">
+        <div class="text-gray-700 leading-relaxed whitespace-pre-wrap">
+            {{ noticia.conteudo|linebreaksbr }}
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-3">
+            <a href="{% url 'editar_noticia' pk=noticia.pk %}"
+                class="px-3 py-1.5 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 transition">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="{% url 'excluir_noticia' pk=noticia.pk %}"
+                class="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition">
+                <i class="bi bi-trash"></i> Excluir
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if acao == 'excluir' %}
+    <div class="mt-4 p-6 bg-red-50 border-l-4 border-red-600 text-red-800 card-shadow">
+        <h4 class="text-lg font-bold flex items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill"></i> Atenção! Confirme a Exclusão
+        </h4>
+        <p class="mt-2 text-sm">Tem certeza que deseja **excluir permanentemente** a notícia "**{{ noticia.titulo }}**"?
+            Esta ação não pode ser desfeita.</p>
+
+        <form method="POST" action="{% url 'excluir_noticia' pk=noticia.pk %}" class="mt-4 flex gap-3">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">
+                <i class="bi bi-trash"></i> Sim, Excluir
+            </button>
+            <a href="{% url 'detalhe_noticia' pk=noticia.pk %}"
+                class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">
+                Não, Voltar
+            </a>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if acao == 'lista' and noticias %}
+    <div class="overflow-x-auto mt-6 border border-gray-200 rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="table-header-style px-6 py-3 text-left text-xs tracking-wider" style="width: 30%;">Título
+                    </th>
+                    <th class="table-header-style px-6 py-3 text-left text-xs tracking-wider">Conteúdo (Resumo)</th>
+                    <th class="table-header-style px-6 py-3 text-left text-xs tracking-wider" style="width: 150px;">
+                        Publicação</th>
+                    <th class="table-header-style px-6 py-3 text-center text-xs tracking-wider" style="width: 120px;">
+                        Ações</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-100 text-sm">
+                {% for n in noticias %}
+                <tr class="table-row-hover" id="noticia-row-{{ n.pk }}">
+                    <td class="px-6 py-4 font-medium text-gray-900">
+                        <a href="{% url 'detalhe_noticia' pk=n.pk %}" class="text-primary-action hover:underline">
+                            {{ n.titulo }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 text-gray-600">{{ n.conteudo|truncatechars:80 }}</td>
+                    <td class="px-6 py-4 text-gray-500">{{ n.data_publicacao|date:"d/m/Y H:i" }}</td>
+                    <td class="px-6 py-4 text-center" onclick="event.stopPropagation();">
+                        <div class="action-icon-wrapper justify-center">
+                            <a href="{% url 'editar_noticia' pk=n.pk %}" class="text-yellow-600 hover:text-yellow-800"
+                                title="Editar">
+                                <i class="bi bi-pencil w-5 h-5"></i>
+                            </a>
+                            <a href="{% url 'excluir_noticia' pk=n.pk %}" class="text-red-600 hover:text-red-800"
+                                title="Excluir">
+                                <i class="bi bi-trash w-5 h-5"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                        Nenhuma notícia encontrada.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 1. Foco Automático no Campo Título (UX)
+        const tituloInput = document.getElementById('id_titulo');
+        if (tituloInput) {
+            tituloInput.focus();
+        }
+
+        // 2. Tornar Linhas da Tabela Clicáveis (UX)
+        const tableRows = document.querySelectorAll('.table-row-hover');
+
+        tableRows.forEach(row => {
+            const detailLink = row.querySelector('td a[href*="detalhe_noticia"]');
+
+            if (detailLink) {
+                const detailUrl = detailLink.getAttribute('href');
+
+                row.addEventListener('click', (event) => {
+                    // Impede a navegação se o clique foi diretamente em um link (título, editar, excluir)
+                    if (event.target.closest('a')) {
+                        return;
+                    }
+
+                    // Redireciona para o detalhe
+                    window.location.href = detailUrl;
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

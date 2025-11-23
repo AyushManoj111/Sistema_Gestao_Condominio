@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gerente do Condomínio - Dashboard{% endblock %}</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base e fonte */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: #fafafa; color: #2c3e50; display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* Navbar - Full width at top */
+        .navbar {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        /* Layout container for sidebar and main content */
+        .layout {
+            display: flex;
+            flex: 1;
+        }
+
+        /* Sidebar - Below navbar */
+        .sidebar {
+            width: 200px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 16px 0;
+            gap: 16px;
+            border-right: 1px solid #e8e8e8;
+            transition: width 0.3s;
+            position: sticky;
+            top: 0;
+            height: calc(100vh - 60px);
+        }
+        .sidebar-icon-link {
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+            gap: 12px;
+        }
+        .sidebar-icon-link.active {
+            background: #ffcccc;
+            color: #e74c3c;
+        }
+        .sidebar-icon-link:hover {
+            background: #f5f5f5;
+            color: #e74c3c;
+        }
+        .sidebar-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        .sidebar-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Navbar - Estilo Compacto (60px) */
+        .navbar {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .navbar-brand { font-size: 1.1rem; font-weight: 600; color: #1a1a1a; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e74c3c; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; }
+        .btn-logout { background:#e74c3c; color:#fff; padding:8px 16px; border-radius:6px; border:0; cursor:pointer; font-size:0.85rem; transition:background 0.2s; }
+        .btn-logout:hover{ background:#c0392b; }
+
+        /* Botão de tema */
+        .btn-theme {
+            background: #f5f5f5;
+            border: 1px solid #e8e8e8;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #2c3e50;
+            transition: all 0.2s;
+        }
+        .btn-theme:hover { background: #ebebeb; border-color: #d0d0d0; }
+
+        /* Tema escuro */
+        .theme-dark body, .theme-dark {
+            background: #0b0f14;
+            color: #e2e8f0;
+        }
+        .theme-dark .sidebar {
+            background: #0f1620;
+            border-right: 1px solid #000000;
+        }
+        .theme-dark .sidebar-icon-link { color: #94a3b8; }
+        .theme-dark .sidebar-icon-link.active { background: #ffcccc; color: #e74c3c; }
+        .theme-dark .sidebar-icon-link:hover { background: #ffcccc; color: #e74c3c; }
+
+        .theme-dark .navbar {
+            background: #0f1620;
+            border-bottom: 1px solid #000000;
+        }
+        .theme-dark .navbar-brand { color: #e2e8f0; }
+        .theme-dark .btn-logout { background: #dc2626; }
+        .theme-dark .btn-logout:hover { background: #b91c1c; }
+        .theme-dark .btn-theme { background: #ffcccc; border-color: #000000; color: #e2e8f0; }
+        .theme-dark .btn-theme:hover { background: #ffcccc; }
+
+        /* Adaptações para o tema escuro no bloco de conteúdo (se houver) */
+        .theme-dark .card-custom {
+            background: #0f1620;
+            border-color: #000000;
+        }
+        .theme-dark .card-custom h3 { color: #94a3b8; }
+        .theme-dark .card-custom p { color: #e2e8f0; }
+        .theme-dark .content .bg-white { background: #0f1620; border-color: #000000; }
+        .theme-dark .content .text-gray-700 { color: #e2e8f0; }
+        .theme-dark .content .text-gray-800 { color: #e2e8f0; }
+        .theme-dark .content .text-gray-600 { color: #cbd5e1; }
+        .theme-dark .content .bg-gray-50 { background: #ffcccc; }
+        .theme-dark .content a.text-indigo-600 { color: #e74c3c; }
+        .theme-dark .content a.text-indigo-600:hover { color: #000000; }
+        .theme-dark .content .border-gray-100 { border-color: #000000; }
+
+        /* Cartões (Cards) */
+        .card-custom {
+            background:#fff;
+            border-radius:12px;
+            padding:16px;
+            border:1px solid #e8e8e8;
+            transition:box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .card-custom:hover { box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+        .card-custom h3 { font-size:0.7rem; color:#7f8c8d; margin-bottom:6px; font-weight:500; text-transform:uppercase; letter-spacing:0.5px; }
+        .card-custom p { font-size:1.4rem; font-weight:600; color:#1a1a1a; }
+        .card-custom .icon { margin-right: 8px; }
+
+        /* Conteúdo principal */
+        .main-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .content { flex: 1; padding: 32px 24px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        /* Ajuste para mobile */
+        @media (max-width: 768px) {
+            body { display: block; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid #e8e8e8; flex-direction: row; justify-content: space-around; padding: 12px 0; position: static; }
+            .sidebar-nav-links { flex-direction: row; gap: 4px; }
+            .sidebar-logout { display: none; }
+            .navbar { padding: 0 16px; }
+            .user-info span { display: none; }
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+
+</head>
+<body>
+
+    {% include "gerente_condominio/navbar.html" %}
+
+    <div class="layout">
+        {% include "gerente_condominio/sidebar.html" %}
+
+        <div class="main-content">
+            <div class="content">
+                <div class="container">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/i18next@22.4.9/dist/umd/i18next.min.js"></script>
+    <script src="traducao.js"></script>
+    <script>
+        // Tema (light/dark)
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+
+        function applyTheme(theme) {
+            currentTheme = theme;
+            localStorage.setItem('theme', theme);
+            if (theme === 'dark') {
+                document.documentElement.classList.add('theme-dark');
+            } else {
+                document.documentElement.classList.remove('theme-dark');
+            }
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function toggleTheme() {
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
+
+        // Inicializar com idioma/tema salvos
+        window.addEventListener('DOMContentLoaded', () => {
+            applyTheme(currentTheme);
+            if (window.initI18n) window.initI18n(); // Chama a inicialização da tradução
+        });
+
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    </script>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

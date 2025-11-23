@@ -1,0 +1,576 @@
+{% extends "gerente_condominio/base.html" %}
+
+{% block title %}Empresas Contratadas{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* MODAL STYLES */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.3s, visibility 0.3s;
+        z-index: 40;
+    }
+
+    .modal-overlay.open {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        padding: 1.5rem; 
+        max-width: 768px; 
+        width: 90%;
+        max-height: 90vh;
+        transform: scale(0.95);
+        transition: transform 0.3s ease-out;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .modal-overlay.open .modal-content {
+        transform: scale(1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #E5E7EB;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1F2937;
+    }
+
+    .modal-close-btn {
+        font-size: 1.5rem;
+        line-height: 1;
+        color: #9CA3AF;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .modal-close-btn:hover { color: #4B5563; }
+
+    .modal-body-scroll {
+        overflow-y: auto; 
+        flex: 1;
+        padding-right: 0.5rem;
+    }
+
+    /* FORM STYLES */
+    .form-label-xs { 
+        font-size: 0.75rem; 
+        font-weight: 500; 
+        color: #6B7280; 
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+
+    .input-field { 
+        border: 1px solid #D1D5DB; 
+        border-radius: 0.375rem; 
+        padding: 0.5rem 0.75rem; 
+        width: 100%; 
+        font-size: 0.875rem;
+        transition: all 0.2s; 
+    }
+    
+    .input-field:focus { 
+        outline: none; 
+        border-color: #e74c3c; 
+        box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.1); 
+    }
+    
+    .main-button { 
+        background-color: #e74c3c; 
+        color: white; 
+        font-weight: 600; 
+        padding: 0.75rem 1.5rem; 
+        border-radius: 0.375rem; 
+        transition: background-color 0.2s; 
+        width: 100%; 
+        border: none;
+        cursor: pointer;
+    }
+    
+    .main-button:hover { 
+        background-color: #0d9291; 
+    }
+
+    /* Tema escuro */
+    .theme-dark .modal-content { background-color: #0f1620; border: 1px solid #000000; }
+    .theme-dark .modal-title { color: #e2e8f0; }
+    .theme-dark .modal-header { border-color: #000000; }
+    .theme-dark .form-label-xs { color: #cbd5e1; }
+    .theme-dark .text-blue-500 { color: #e74c3c; }
+    .theme-dark .hover\:text-indigo-900:hover { color: #000000; }
+
+    /* Modal em tema escuro */
+    .theme-dark .modal-content { background-color: #0f1620; border: 1px solid #000000; }
+    .theme-dark .close-btn { color: #94a3b8; }
+    .theme-dark .input-field { background: #ffcccc; color: #e2e8f0; border-color: #000000; }
+    .theme-dark .input-field::placeholder { color: #94a3b8; }
+    .theme-dark .input-field:focus { border-color: #e74c3c; box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2); }
+
+    .table-cell-tight {
+        padding: 10px 12px; 
+        font-size: 0.813rem; 
+    }
+    
+    .table-header-tight {
+        padding: 10px 12px;
+        font-size: 0.688rem; 
+    }
+
+    .hidden { display: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="bg-white p-8 rounded-lg shadow-md">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-gray-800">Lista de Empresas Contratadas</h2>
+            <button id="openAddCompanyBtn" class="main-button w-auto">Adicionar Empresa</button>
+        </div>
+
+        <div class="overflow-x-auto mt-4">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Empresa</th>
+                        <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Telefone</th>
+                        <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Email</th>
+                        <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Província</th>
+                        <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Endereço</th>
+                        <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Serviços</th>
+                        <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="companiesTableBody" class="bg-white divide-y divide-gray-200">
+                    {% for empresa in empresas %}
+                    <tr data-id="{{ empresa.id }}">
+                        <td class="table-cell-tight font-medium text-gray-900">{{ empresa.nome }}</td>
+                        <td class="table-cell-tight text-red-500">{{ empresa.telefone|default:'-' }}</td>
+                        <td class="table-cell-tight text-red-500">{{ empresa.email|default:'-' }}</td>
+                        <td class="table-cell-tight text-red-500">{{ empresa.provincia|default:'-' }}</td>
+                        <td class="table-cell-tight text-red-500">{{ empresa.endereco|default:'-' }}</td>
+                        <td class="table-cell-tight text-red-500">{{ empresa.servicos|default:'-' }}</td>
+                        <td class="table-cell-tight text-left font-medium flex items-center gap-2">
+                            <a href="#" data-action="history" data-id="{{ empresa.id }}" class="text-red-600 hover:text-blue-800">Histórico</a>
+                            <a href="#" data-action="edit" data-id="{{ empresa.id }}" class="text-indigo-600 hover:text-indigo-900">Editar</a>
+                            <a href="#" data-action="delete" data-id="{{ empresa.id }}" class="text-red-600 hover:text-red-900">Excluir</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="table-cell-tight text-center text-gray-500">Nenhuma empresa encontrada.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ADICIONAR/EDITAR EMPRESA -->
+<div id="companyModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 720px;">
+        <div class="modal-header">
+            <h3 id="companyModalTitle" class="modal-title">Nova Empresa</h3>
+            <span class="modal-close-btn" id="closeCompanyModalBtn">&times;</span>
+        </div>
+        <div class="modal-body-scroll">
+            <form id="companyForm" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" id="companyId">
+                <div>
+                    <label class="form-label-xs">Nome da Empresa</label>
+                    <input type="text" id="companyNome" required class="input-field" placeholder="Ex: TecnoFix Manutenções">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label-xs">Telefone</label>
+                        <input type="text" id="companyTelefone" class="input-field" placeholder="Ex: +258 84 123 4567">
+                    </div>
+                    <div>
+                        <label class="form-label-xs">Província</label>
+                        <select id="companyProvincia" class="input-field">
+                            <option value="">Selecione a Província</option>
+                            <option>Maputo (Cidade)</option>
+                            <option>Maputo (Província)</option>
+                            <option>Gaza</option>
+                            <option>Inhambane</option>
+                            <option>Sofala</option>
+                            <option>Manica</option>
+                            <option>Tete</option>
+                            <option>Zambézia</option>
+                            <option>Nampula</option>
+                            <option>Cabo Delgado</option>
+                            <option>Niassa</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label-xs">Email</label>
+                    <input type="email" id="companyEmail" class="input-field" placeholder="empresa@exemplo.com">
+                </div>
+                <div>
+                    <label class="form-label-xs">Endereço</label>
+                    <input type="text" id="companyEndereco" class="input-field" placeholder="Ex: Av. Julius Nyerere, 123, Maputo">
+                </div>
+                <div>
+                    <label class="form-label-xs">Serviços Prestados</label>
+                    <input type="text" id="companyServicos" class="input-field" placeholder="Ex: Pintura, Hidráulica, Elétrica">
+                </div>
+                <div>
+                    <label class="form-label-xs">Observações</label>
+                    <textarea id="companyObs" rows="3" class="input-field" placeholder="Notas internas"></textarea>
+                </div>
+                <button type="submit" class="main-button mt-2">Guardar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL HISTÓRICO EMPRESA -->
+<div id="companyHistoryModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 860px;">
+        <div class="modal-header">
+            <h3 id="companyHistoryTitle" class="modal-title">Histórico da Empresa</h3>
+            <div class="flex items-center gap-2">
+                <button id="printHistoryBtn" class="btn-theme">Imprimir</button>
+                <span class="modal-close-btn" id="closeCompanyHistoryBtn">&times;</span>
+            </div>
+        </div>
+        <div id="companyHistoryBody" class="modal-body-scroll">
+            <!-- conteúdo do histórico renderizado via JS -->
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/i18next@22.4.9/dist/umd/i18next.min.js"></script>
+<script src="traducao.js"></script>
+<script>
+    // Tema (light/dark)
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+
+    function applyTheme(theme) {
+        currentTheme = theme;
+        localStorage.setItem('theme', theme);
+        if (theme === 'dark') {
+            document.documentElement.classList.add('theme-dark');
+        } else {
+            document.documentElement.classList.remove('theme-dark');
+        }
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    function toggleTheme() {
+        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    }
+
+    // ========== EMPRESAS CONTRATADAS - DADOS E LÓGICA ==========
+    window.companiesState = {
+        companies: [],
+        historico: {}
+    };
+
+    function renderCompaniesTable() {
+        const tbody = document.getElementById('companiesTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        companiesState.companies.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class=\"table-cell-tight font-medium text-gray-900\">${c.nome}</td>
+                <td class=\"table-cell-tight text-red-500\">${c.telefone || '-'}</td>
+                <td class=\"table-cell-tight text-red-500\">${c.email || '-'}</td>
+                <td class=\"table-cell-tight text-red-500\">${c.provincia || '-'}</td>
+                <td class=\"table-cell-tight text-red-500\">${c.endereco || '-'}</td>
+                <td class=\"table-cell-tight text-red-500\">${c.servicos || '-'}</td>
+                <td class="table-cell-tight text-left font-medium flex items-center gap-2">
+                    <a href="#" data-action="history" data-id="${c.id}" class="text-red-600 hover:text-blue-800">Histórico</a>
+                    <a href="#" data-action="edit" data-id="${c.id}" class="text-indigo-600 hover:text-indigo-900">Editar</a>
+                    <a href="#" data-action="delete" data-id="${c.id}" class="text-red-600 hover:text-red-900">Excluir</a>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // MODAL ADD/EDIT COMPANY
+    const companyModal = document.getElementById('companyModal');
+    const openAddCompanyBtn = document.getElementById('openAddCompanyBtn');
+    const closeCompanyModalBtn = document.getElementById('closeCompanyModalBtn');
+    const companyForm = document.getElementById('companyForm');
+    const companyModalTitle = document.getElementById('companyModalTitle');
+
+    function openCompanyModal(mode, company) {
+        companyModal.classList.add('open');
+        companyModalTitle.textContent = mode === 'edit' ? 'Editar Empresa' : 'Nova Empresa';
+        document.getElementById('companyId').value = company?.id || '';
+        document.getElementById('companyNome').value = company?.nome || '';
+        document.getElementById('companyTelefone').value = company?.telefone || '';
+        document.getElementById('companyEmail').value = company?.email || '';
+        document.getElementById('companyProvincia').value = company?.provincia || '';
+        document.getElementById('companyEndereco').value = company?.endereco || '';
+        document.getElementById('companyServicos').value = company?.servicos || '';
+        document.getElementById('companyObs').value = company?.observacoes || '';
+    }
+
+    function closeCompanyModal() {
+        companyModal.classList.remove('open');
+    }
+
+    if (openAddCompanyBtn) openAddCompanyBtn.addEventListener('click', () => openCompanyModal('new'));
+    if (closeCompanyModalBtn) closeCompanyModalBtn.addEventListener('click', closeCompanyModal);
+    if (companyModal) companyModal.addEventListener('click', (e) => { if (e.target === companyModal) closeCompanyModal(); });
+
+    // Função para obter CSRF token
+    function getCSRFToken() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        return csrfToken ? csrfToken.value : '';
+    }
+
+    if (companyForm) companyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('companyId').value.trim();
+        const data = {
+            nome: document.getElementById('companyNome').value.trim(),
+            telefone: document.getElementById('companyTelefone').value.trim(),
+            email: document.getElementById('companyEmail').value.trim(),
+            provincia: document.getElementById('companyProvincia').value.trim(),
+            endereco: document.getElementById('companyEndereco').value.trim(),
+            servicos: document.getElementById('companyServicos').value.trim(),
+            observacoes: document.getElementById('companyObs').value.trim(),
+        };
+        if (!data.nome) return;
+
+        try {
+            const url = id ? `/gerente/edit-empresa/${id}/` : '/gerente/add-empresa/';
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify(data),
+            });
+            const result = await response.json();
+            if (response.ok && result.success) {
+                loadCompaniesData(); // Recarregar dados do servidor
+                closeCompanyModal();
+            } else {
+                alert(result.error || 'Erro ao salvar empresa.');
+            }
+        } catch (error) {
+            console.error('Erro ao salvar empresa:', error);
+            alert('Erro ao salvar empresa.');
+        }
+    });
+
+    // AÇÕES NA TABELA (Histórico, Editar, Excluir)
+    document.addEventListener('click', (e) => {
+        const anchor = e.target.closest('a[data-action]');
+        if (!anchor) return;
+        const id = anchor.getAttribute('data-id');
+        const action = anchor.getAttribute('data-action');
+        if (action === 'history') {
+            e.preventDefault();
+            openCompanyHistory(id);
+        } else if (action === 'edit') {
+            e.preventDefault();
+            const company = companiesState.companies.find(c => c.id == id);
+            openCompanyModal('edit', company);
+        } else if (action === 'delete') {
+            e.preventDefault();
+            if (confirm('Tem certeza que deseja excluir esta empresa?')) {
+                fetch(`/gerente/delete-empresa/${id}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken(),
+                    },
+                    body: JSON.stringify({}),
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        loadCompaniesData(); // Recarregar dados do servidor
+                    } else {
+                        alert(result.error || 'Erro ao excluir empresa.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao excluir empresa:', error);
+                    alert('Erro ao excluir empresa.');
+                });
+            }
+        }
+    });
+
+    // MODAL HISTÓRICO
+    const companyHistoryModal = document.getElementById('companyHistoryModal');
+    const companyHistoryBody = document.getElementById('companyHistoryBody');
+    const companyHistoryTitle = document.getElementById('companyHistoryTitle');
+    const closeCompanyHistoryBtn = document.getElementById('closeCompanyHistoryBtn');
+    const printHistoryBtn = document.getElementById('printHistoryBtn');
+
+    function openCompanyHistory(companyId) {
+        const company = companiesState.companies.find(c => c.id === companyId);
+        const historico = companiesState.historico[companyId] || [];
+        companyHistoryTitle.textContent = `Histórico - ${company ? company.nome : ''}`;
+        companyHistoryBody.innerHTML = `
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Data</th>
+                            <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Serviço</th>
+                            <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Local</th>
+                            <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Custo (MZN)</th>
+                            <th class="table-header-tight text-left text-red-500 uppercase tracking-wider">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${historico.map(h => `
+                            <tr>
+                                <td class="table-cell-tight text-red-500">${h.data}</td>
+                                <td class="table-cell-tight text-red-500">${h.servico}</td>
+                                <td class="table-cell-tight text-red-500">${h.local}</td>
+                                <td class="table-cell-tight text-red-500">${h.custo.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}</td>
+                                <td class="table-cell-tight text-red-500">${h.estado}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        companyHistoryModal.classList.add('open');
+        // guardar id atual no botão de imprimir
+        printHistoryBtn.setAttribute('data-company-id', companyId);
+    }
+
+    function closeCompanyHistory() {
+        companyHistoryModal.classList.remove('open');
+        companyHistoryBody.innerHTML = '';
+    }
+
+    if (closeCompanyHistoryBtn) closeCompanyHistoryBtn.addEventListener('click', closeCompanyHistory);
+    if (companyHistoryModal) companyHistoryModal.addEventListener('click', (e) => { if (e.target === companyHistoryModal) closeCompanyHistory(); });
+
+    if (printHistoryBtn) printHistoryBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const companyId = printHistoryBtn.getAttribute('data-company-id');
+        const company = companiesState.companies.find(c => c.id === companyId);
+        const historico = companiesState.historico[companyId] || [];
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) return;
+        const html = `
+            <html>
+            <head>
+                <title>Histórico - ${company ? company.nome : ''}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 24px; }
+                    h1 { font-size: 20px; margin-bottom: 16px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
+                    th { background: #f3f4f6; text-transform: uppercase; letter-spacing: .04em; }
+                </style>
+            </head>
+            <body>
+                <h1>Histórico da Empresa - ${company ? company.nome : ''}</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Serviço</th>
+                            <th>Local</th>
+                            <th>Custo (MZN)</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${historico.map(h => `
+                            <tr>
+                                <td>${h.data}</td>
+                                <td>${h.servico}</td>
+                                <td>${h.local}</td>
+                                <td>${h.custo.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}</td>
+                                <td>${h.estado}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    });
+
+    // Função para carregar dados do backend
+    async function loadCompaniesData() {
+        try {
+            // Carregar empresas
+            const empresasResponse = await fetch('/gerente/api/get-empresas/');
+            if (!empresasResponse.ok) {
+                throw new Error(`HTTP error! status: ${empresasResponse.status}`);
+            }
+            const empresasData = await empresasResponse.json();
+            companiesState.companies = empresasData.empresas || [];
+
+            // Carregar histórico para cada empresa
+            for (const empresa of companiesState.companies) {
+                try {
+                    const historicoResponse = await fetch(`/gerente/api/get-historico-empresa/${empresa.id}/`);
+                    if (historicoResponse.ok) {
+                        const historicoData = await historicoResponse.json();
+                        companiesState.historico[empresa.id] = historicoData.historico || [];
+                    } else {
+                        companiesState.historico[empresa.id] = [];
+                    }
+                } catch (error) {
+                    console.error(`Erro ao carregar histórico para empresa ${empresa.id}:`, error);
+                    companiesState.historico[empresa.id] = [];
+                }
+            }
+
+            renderCompaniesTable();
+        } catch (error) {
+            console.error('Erro ao carregar dados das empresas:', error);
+            // Não renderizar se houver erro, manter dados iniciais
+        }
+    }
+
+    // Render inicial e carregar dados
+    window.addEventListener('DOMContentLoaded', () => {
+        renderCompaniesTable();
+        loadCompaniesData();
+    });
+</script>
+{% endblock %}

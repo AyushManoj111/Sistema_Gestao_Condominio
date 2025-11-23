@@ -1,0 +1,76 @@
+<aside class="sidebar">
+    <a href="{% url 'dashboard' %}" title="Dashboard"
+        class="sidebar-icon-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}">
+        <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" />
+        </svg>
+        <span class="sidebar-text">Dashboard</span>
+    </a>
+
+    <div class="sidebar-nav-links flex flex-col gap-4">
+        <a href="{% url 'ver_inquilinos' %}" title="Inquilinos"
+            class="sidebar-icon-link{% if request.resolver_match.url_name == 'ver_inquilinos' %} active{% endif %}">
+            <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+            <span class="sidebar-text">Inquilinos</span>
+        </a>
+        <a href="{% url 'ver_casas' %}" title="Casas"
+            class="sidebar-icon-link{% if request.resolver_match.url_name == 'ver_casas' %} active{% endif %}">
+            <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z"
+                    clip-rule="evenodd" />
+            </svg>
+            <span class="sidebar-text">Casas</span>
+        </a>
+        <a href="{% url 'ver_empresas' %}" title="Empresas"
+            class="sidebar-icon-link{% if request.resolver_match.url_name == 'ver_empresas' %} active{% endif %}">
+            <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z"
+                    clip-rule="evenodd" />
+                <path d="M6 8a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" />
+                <path d="M6 10a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" />
+            </svg>
+            <span class="sidebar-text">Empresas</span>
+        </a>
+        <a href="{% url 'ver_manutencoes' %}" title="Manutenções"
+            class="sidebar-icon-link{% if request.resolver_match.url_name == 'ver_manutencoes' %} active{% endif %}">
+            <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M8.293 2.293a1 1 0 011.414 0l1.586 1.586 1.293-1.293a1 1 0 011.414 1.414l-1.293 1.293 1.586 1.586a1 1 0 010 1.414l-2.586 2.586 6.293 6.293a1 1 0 01-1.414 1.414l-6.293-6.293-2.586 2.586a1 1 0 01-1.414 0L3.707 9.707a1 1 0 010-1.414l2.586-2.586L4.293 4.293a1 1 0 011.414-1.414l1.293 1.293L8.293 2.293z"
+                    clip-rule="evenodd" />
+            </svg>
+            <span class="sidebar-text">Manutenções</span>
+        </a>
+        <a href="{% url 'ver_contratos' %}" title="Contratos"
+            class="sidebar-icon-link{% if request.resolver_match.url_name == 'ver_contratos' %} active{% endif %}">
+            <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-4a2 a2 2 0 01-2-2v-1z" />
+                <path fill-rule="evenodd"
+                    d="M12 2H8a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2zM8 4h8v12H8V4z"
+                    clip-rule="evenodd" />
+            </svg>
+            <span class="sidebar-text">Contratos</span>
+        </a>
+        <a href="{% url 'gerenciar_noticias' %}" title="Notícias"
+            class="sidebar-icon-link{% if request.resolver_match.url_name in 'gerenciar_noticias,adicionar_noticia,detalhe_noticia,editar_noticia,excluir_noticia' %} active{% endif %}">
+            <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H5v-2h5v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-4-4h-2v-2h2v2zm4 0h-2v-2h2v2zm-4-4h-2V7h2v2zm4 0h-2V7h2v2z" />
+            </svg>
+            <span class="sidebar-text">Notícias</span>
+        </a>
+    </div>
+
+    <a href="{% url 'logout' %}" title="Sair"
+        class="sidebar-icon-link mt-auto{% if request.resolver_match.url_name == 'logout' %} active{% endif %}">
+        <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+                d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h5a1 1 0 001-1v-2a1 1 0 00-1-1H4V5h4a1 1 0 001-1V3a1 1 0 00-1-1H3zm13.707 9.707a1 1 0 001.414-1.414l-4-4a1 1 0 00-1.414 1.414L15.586 11H8a1 1 0 100 2h7.586l-2.293 2.293a1 1 0 001.414 1.414l4-4z"
+                clip-rule="evenodd" />
+        </svg>
+        <span class="sidebar-text">Sair</span>
+    </a>
+</aside>
